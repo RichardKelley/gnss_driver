@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package apollo.drivers.gnss.config;
+package gnss_driver.config;
 
 message Stream {
   enum Format {

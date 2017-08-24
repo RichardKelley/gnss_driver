@@ -16,8 +16,8 @@
 #include "util/time_conversion.h"
 
 // TODO - deal with this 
-// #include "modules/localization/proto/gps.pb.h"
-// #include "modules/localization/proto/imu.pb.h"
+#include "modules/localization/proto/gps.pb.h"
+#include "modules/localization/proto/imu.pb.h"
 
 namespace gnss_driver {
 

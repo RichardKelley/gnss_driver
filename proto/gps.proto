@@ -5,9 +5,9 @@ package gnss_driver;
 import "header.proto";
 import "pose.proto";
 
-message Imu {
+message Gps {
   optional gnss_driver.Header header = 1;
 
-  // Inertial Measurement Unit(IMU)
-  optional gnss_driver.Pose imu = 3;
+  // Localization message: from GPS or localization
+  optional gnss_driver.Pose localization = 2;
 }

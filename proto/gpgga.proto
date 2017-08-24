@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package apollo.drivers.gnss.gpgga;
+package gnss_driver;
 
 message GPGGA {
   required string gpgga = 1;
