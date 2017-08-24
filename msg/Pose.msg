@@ -1,0 +1,9 @@
+PointENU position
+Quaternion orientation
+Point3D linear_velocity
+Point3D linear_acceleration
+Point3D angular_velocity
+
+float64 heading
+Point3D linear_acceleration_vrf
+Point3D angular_velocity_vrf
