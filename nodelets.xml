@@ -1,0 +1,29 @@
+<library path="lib/libstream_nodelet">
+  <class name="gnss_driver/StreamNodelet"
+         type="gnss_driver::StreamNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+    Publish gnss raw data
+    </description>
+  </class>
+</library>
+
+<library path="lib/libparser_nodelet">
+  <class name="gnss_driver/ParserNodelet"
+         type="gnss_driver::ParserNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+    Receive gnss raw data, and parse raw data, publish gnss message.
+    </description>
+  </class>
+</library>
+
+<library path="lib/libnovatel_ros_parser_nodelet">
+  <class name="gnss_driver/NovatelRosParserNodelet"
+         type="gnss_driver::NovatelRosParserNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+    Receive gnss raw data, and parse raw data to novatel ros msg.
+    </description>
+  </class>
+</library>
