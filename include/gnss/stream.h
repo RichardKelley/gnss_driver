@@ -44,7 +44,7 @@ namespace gnss_driver {
     
     static constexpr size_t NUM_STATUS =
       static_cast<int>(Stream::Status::ERROR) + 1;
-    Status get_status() const { return _status; }
+    Status get_status() const { return status_; }
     
     // Returns whether it was successful to connect.
     virtual bool connect() = 0;
@@ -79,7 +79,7 @@ namespace gnss_driver {
   protected:
     Stream() {}
     
-    Status _status = Status::DISCONNECTED;
+    Status status_ = Status::DISCONNECTED;
     
   private:
     std::vector<std::string> _login_data;

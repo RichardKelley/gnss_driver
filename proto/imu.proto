@@ -1,13 +1,28 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
 import "header.proto";
-import "pose.proto";
+import "geometry.proto";
 
 message Imu {
-  optional gnss_driver.Header header = 1;
+  optional gnss_driver.pb.Header header = 1;
 
-  // Inertial Measurement Unit(IMU)
-  optional gnss_driver.Pose imu = 3;
+  // The time of IMU measurement, seconds since the GPS epoch (Jan 6, 1980).
+  optional double measurement_time = 2;  // In seconds.
+
+  // When measurement_span is non-zero, the gyroscope and accelerometer
+  // measurements are averaged for the period from
+  // (measurement_time - measurement_span) to measurement_time. Usually,
+  //      measurement_span = 1 / sampling_frequency.
+  //
+  // When measurement_span is 0, angular_velocity and linear_acceleration are
+  // instantaneous at measurement_time.
+  optional float measurement_span = 3 [default = 0.0];  // In seconds.
+
+  // Forward/left/up in meters per square second.
+  optional gnss_driver.pb.Point3D linear_acceleration = 4;
+
+  // Around forward/left/up axes in radians per second.
+  optional gnss_driver.pb.Point3D angular_velocity = 5;
 }

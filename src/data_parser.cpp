@@ -15,9 +15,16 @@
 #include "proto/ins.pb.h"
 #include "util/time_conversion.h"
 
+// ROS msgs
+#include "gnss_driver/Gnss.h"
+#include "gnss_driver/GPGGA.h"
+#include "gnss_driver/Imu.h"
+#include "gnss_driver/Ins.h"
+#include "gnss_driver/Gps.h"
+
 // TODO - deal with this 
-#include "modules/localization/proto/gps.pb.h"
-#include "modules/localization/proto/imu.pb.h"
+#include "gps.pb.h"
+#include "imu.pb.h"
 
 namespace gnss_driver {
 
@@ -35,7 +42,6 @@ namespace gnss_driver {
       2, 0, 0, 0,    0, 0, 0, 2, 0, 0, 0,    0, 0, 0, 2, 0, 0, 0,
       0, 0, 0, 0.01, 0, 0, 0, 0, 0, 0, 0.01, 0, 0, 0, 0, 0, 0, 0.01};
 
-    // TODO remove pb dependency
     template <class T>
     void publish_message_raw(const ros::Publisher &pub, const T *pb) {
       std_msgs::String msg_pub;
@@ -47,10 +53,10 @@ namespace gnss_driver {
       ROS_ERROR("Failed to serialize message.");
     }
     
-    Parser *create_parser(config::Stream::Format format,
+    Parser *create_parser(pb::Stream::Format format,
 			  bool is_base_station = false) {
       switch (format) {
-      case config::Stream::NOVATEL_BINARY:
+      case pb::Stream::NOVATEL_BINARY:
 	return Parser::create_novatel();
 	
       default:
@@ -71,17 +77,17 @@ namespace gnss_driver {
       imu_publisher_(nh.advertise<gnss_driver::Imu>(corr_imu_topic, 64)),
       nav_odometry_publisher_(nh.advertise<gnss_driver::Gps>(odometry_topic, 64)),
       gnss_status_publisher_(nh.advertise<gnss_driver::GnssStatus>(
-              gnss_status_topic, 64, true)),
+								       gnss_status_topic, 64, true)),
       ins_status_publisher_(nh.advertise<gnss_driver::InsStatus>(ins_status_topic,
-								 64, true)) {
+								     64, true)) {
     std::string utm_target_param;
     nh.param("proj4_text", utm_target_param, UTM_TARGET);
     ROS_INFO_STREAM("proj4_text : " << utm_target_param);
     
     wgs84pj_source_ = pj_init_plus(WGS84_TEXT.c_str());
     utm_target_ = pj_init_plus(utm_target_param.c_str());
-    gnss_status_.reset(new gnss_driver::GnssStatus());
-    ins_status_.reset(new gnss_driver::InsStatus());
+    gnss_status_.reset(new gnss_driver::pb::GnssStatus());
+    ins_status_.reset(new gnss_driver::pb::InsStatus());
     if (gnss_status_) {
       gnss_status_->set_solution_status(0);
       gnss_status_->set_num_sats(0);
@@ -90,20 +96,21 @@ namespace gnss_driver {
     }
     
     if (ins_status_) {
-      ins_status_->set_type(gnss_driver::InsStatus::INVALID);
+      ins_status_->set_type(gnss_driver::pb::InsStatus::INVALID);
     }
   }
 
   bool DataParser::init(const std::string &cfg_file) {
-    config::Config config;
-    if ((!_ins_status) || (!_gnss_status)) {
+    pb::Config config;
+    if ((!ins_status_) || (!gnss_status_)) {
       ROS_ERROR_STREAM("New ins status or gnss status failed.");
       return false;
     }
     ins_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
     gnss_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    ins_status_publisher_.publish(_ins_status);
-    gnss_status_publisher_.publish(_gnss_status);
+    // TODO
+    //ins_status_publisher_.publish(ins_status_);
+    //gnss_status_publisher_.publish(gnss_status_);
     if (!parse_config_text(cfg_file, &config)) {
       ROS_FATAL_STREAM("Failed to load config file: " << cfg_file);
       return false;
@@ -134,32 +141,37 @@ namespace gnss_driver {
       if (type == Parser::MessageType::NONE) break;
       dispatch_message(type, msg_ptr);
     }
+
   }
 
-  void DataParser::check_ins_status(::apollo::drivers::gnss::Ins *ins) {
+  void DataParser::check_ins_status(gnss_driver::pb::Ins *ins) {
+    // TODO
+    /*
     if (ins_status_record_ != static_cast<uint32_t>(ins->type())) {
       ins_status_record_ = static_cast<uint32_t>(ins->type());
       switch (ins->type()) {
-      case apollo::drivers::gnss::Ins::GOOD:
-        ins_status_->set_type(apollo::common::gnss_status::InsStatus::GOOD);
+      case gnss_driver::pb::Ins::GOOD:
+        ins_status_->set_type(gnss_driver::pb::InsStatus::GOOD);
         break;
 	
-      case apollo::drivers::gnss::Ins::CONVERGING:
-        ins_status_->set_type(
-			      apollo::common::gnss_status::InsStatus::CONVERGING);
+      case gnss_driver::pb::Ins::CONVERGING:
+        ins_status_->set_type(gnss_driver::pb::InsStatus::CONVERGING);
         break;
 	
-      case apollo::drivers::gnss::Ins::INVALID:
+      case gnss_driver::pb::Ins::INVALID:
       default:
-        ins_status_->set_type(apollo::common::gnss_status::InsStatus::INVALID);
+        ins_status_->set_type(gnss_driver::pb::InsStatus::INVALID);
         break;
       }
       ins_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-      ins_status_publisher_.publish(_ins_status);
+      ins_status_publisher_.publish(ins_status_);
     }
+    */
   }
 
-  void DataParser::check_gnss_status(::apollo::drivers::gnss::Gnss *gnss) {
+  void DataParser::check_gnss_status(gnss_driver::pb::Gnss *gnss) {
+    // TODO
+    /*
     gnss_status_->set_solution_status(
 				      static_cast<uint32_t>(gnss->solution_status()));
     gnss_status_->set_num_sats(static_cast<uint32_t>(gnss->num_sats()));
@@ -171,7 +183,8 @@ namespace gnss_driver {
       gnss_status_->set_solution_completed(false);
     }
     gnss_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    gnss_status_publisher_.publish(_gnss_status);
+    gnss_status_publisher_.publish(gnss_status_);
+    */
   }
 
   void DataParser::dispatch_message(Parser::MessageType type,
@@ -180,32 +193,36 @@ namespace gnss_driver {
     
     switch (type) {
     case Parser::MessageType::GNSS:
-      check_gnss_status(As<::apollo::drivers::gnss::Gnss>(message));
+      check_gnss_status(As<gnss_driver::pb::Gnss>(message));
       break;
       
     case Parser::MessageType::INS:
-      check_ins_status(As<::apollo::drivers::gnss::Ins>(message));
-      publish_corrimu_pb_message(message);
-      publish_odometry_pb_message(message);
+      check_ins_status(As<gnss_driver::pb::Ins>(message));
+      // TODO
+      //publish_corrimu_pb_message(message);
+      //publish_odometry_pb_message(message);
       break;
       
     case Parser::MessageType::GPGGA:
-      publish_message_raw(_gpgga_publisher,
-                          As<::apollo::drivers::gnss::gpgga::GPGGA>(message));
+      // TODO
+      //publish_message_raw(gpgga_publisher_,
+      //                    As<gnss_driver::pb::GPGGA>(message));
     default:
       break;
     }
   }
 
   void DataParser::publish_odometry_pb_message(const MessagePtr message) {
-    ::apollo::drivers::gnss::Ins *ins = As<::apollo::drivers::gnss::Ins>(message);
-    boost::shared_ptr<::apollo::localization::Gps> gps(new ::apollo::localization::Gps());
+    // TODO
+    /*
+    gnss_driver::pb::Ins *ins = As<gnss_driver::pb::Ins>(message);
+    boost::shared_ptr<gnss_driver::pb::Gps> gps(new gnss_driver::pb::Gps());
     if (!gps) {
       ROS_ERROR("New gps failed.");
       return;
     }
     
-    double unix_sec = apollo::drivers::util::gps2unix(ins->measurement_time());
+    double unix_sec = gnss_driver::gps2unix(ins->measurement_time());
     gps->mutable_header()->set_timestamp_sec(unix_sec);
     auto *gps_msg = gps->mutable_localization();
     double pub_sec = ros::Time::now().toSec();
@@ -219,7 +236,7 @@ namespace gnss_driver {
     x *= DEG_TO_RAD_LOCAL;
     y *= DEG_TO_RAD_LOCAL;
     
-    int ret = pj_transform(_wgs84pj_source, _utm_target, 1, 1, &x, &y, NULL);
+    int ret = pj_transform(wgs84pj_source_, utm_target_, 1, 1, &x, &y, NULL);
     if (ret != 0) {
       ROS_ERROR_STREAM("prj transform failed, x: " << x << ", y: " << y
 		       << ", ret: " << ret);
@@ -255,16 +272,19 @@ namespace gnss_driver {
 		     << (ros::Time::now().toSec() - ins->mutable_header()->timestamp_sec())
 		     << " s.");
     nav_odometry_publisher_.publish(gps);
+    */
   }
   
   void DataParser::publish_corrimu_pb_message(const MessagePtr message) {
-    ::apollo::drivers::gnss::Ins *ins = As<::apollo::drivers::gnss::Ins>(message);
-    boost::shared_ptr<::apollo::localization::Imu> imu(new ::apollo::localization::Imu());
+    // TODO
+    /*
+    gnss_driver::pb::Ins *ins = As<gnss_driver::pb::Ins>(message);
+    boost::shared_ptr<gnss_driver::pb::Imu> imu(new gnss_driver::pb::Imu());
     if (!imu) {
       ROS_ERROR("New imu failed.");
       return;
     }
-    double unix_sec = apollo::drivers::util::gps2unix(ins->measurement_time());
+    double unix_sec = gnss_driver::gps2unix(ins->measurement_time());
     imu->mutable_header()->set_timestamp_sec(unix_sec);
     double pub_sec = ros::Time::now().toSec();
     ROS_DEBUG_STREAM("gps timeline imu delay: " << pub_sec - unix_sec << " s.");
@@ -282,6 +302,7 @@ namespace gnss_driver {
 		     << (ros::Time::now().toSec() - ins->mutable_header()->timestamp_sec())
 		     << " s.");
     imu_publisher_.publish(imu);
+    */
   }
   
 

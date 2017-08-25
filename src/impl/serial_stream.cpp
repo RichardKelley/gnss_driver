@@ -148,10 +148,10 @@ namespace gnss_driver {
 #endif
     
 #ifdef _BSD_SOURCE  // depend glibc
-    ::cfsetspeed(&options, _baud_rate);
+    ::cfsetspeed(&options, baud_rate_);
 #else
-    ::cfsetispeed(&options, _baud_rate);
-    ::cfsetospeed(&options, _baud_rate);
+    ::cfsetispeed(&options, baud_rate_);
+    ::cfsetospeed(&options, baud_rate_);
 #endif
     
     // setup char len
@@ -196,7 +196,7 @@ namespace gnss_driver {
     
     // Update byte_time_ based on the new settings.
     uint32_t bit_time_us = 1e6 / 115200;
-    byte_time_us_ = bit_time_us * (1 + _bytesize + _parity + _stopbits);
+    byte_time_us_ = bit_time_us * (1 + bytesize_ + parity_ + stopbits_);
     return true;
   }
   

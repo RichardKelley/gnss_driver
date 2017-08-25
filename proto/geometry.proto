@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
 // A point in the map reference frame. The map defines an origin, whose
 // coordinate is (0, 0, 0).

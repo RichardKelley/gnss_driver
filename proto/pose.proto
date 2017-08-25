@@ -16,40 +16,40 @@
 
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
 import "geometry.proto";
 
 message Pose {
   // Position of the vehicle reference point (VRP) in the map reference frame.
   // The VRP is the center of rear axle.
-  optional gnss_driver.PointENU position = 1;
+  optional gnss_driver.pb.PointENU position = 1;
 
   // A quaternion that represents the rotation from the map coordinate
   // (East/North/Up) to the
   // vehicle coordinate (Right/Forward/Up).
-  optional gnss_driver.Quaternion orientation = 2;
+  optional gnss_driver.pb.Quaternion orientation = 2;
 
   // Linear velocity of the VRP in the map reference frame.
   // East/north/up in meters per second.
-  optional gnss_driver.Point3D linear_velocity = 3;
+  optional gnss_driver.pb.Point3D linear_velocity = 3;
 
   // Linear acceleration of the VRP in the map reference frame.
   // East/north/up in meters per second.
-  optional gnss_driver.Point3D linear_acceleration = 4;
+  optional gnss_driver.pb.Point3D linear_acceleration = 4;
 
   // Angular velocity of the vehicle in the map reference frame.
   // Around east/north/up axes in radians per second.
-  optional gnss_driver.Point3D angular_velocity = 5;
+  optional gnss_driver.pb.Point3D angular_velocity = 5;
 
   // heading
   optional double heading = 6;
 
   // Linear acceleration of the VRP in the vehicle reference frame.
   // Right/forward/up in meters per square second.
-  optional gnss_driver.Point3D linear_acceleration_vrf = 7;
+  optional gnss_driver.pb.Point3D linear_acceleration_vrf = 7;
 
   // Angular velocity of the vehicle in the vehicle reference frame.
   // Around right/forward/up axes in radians per second.
-  optional gnss_driver.Point3D angular_velocity_vrf = 8;
+  optional gnss_driver.pb.Point3D angular_velocity_vrf = 8;
 }

@@ -1,14 +1,14 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
-import "modules/common/proto/header.proto";
-import "modules/common/proto/geometry.proto";
+import "header.proto";
+import "geometry.proto";
 
 // Solution from a inertial navigation system (INS), which usually fuses GNSS
 // and IMU measurements.
 message Ins {
-  optional apollo.common.Header header = 1;
+  optional gnss_driver.pb.Header header = 1;
 
   // The time of position measurement, seconds since the GPS epoch (01/06/1980).
   optional double measurement_time = 2;  // In seconds.
@@ -29,19 +29,19 @@ message Ins {
   optional Type type = 3;
 
   // Position of the IMU.
-  optional apollo.common.PointLLH position = 4;
+  optional gnss_driver.pb.PointLLH position = 4;
 
   // Roll/pitch/yaw that represents a rotation of the intrinsic sequence z-y-x.
   // Note: our definition differs from what NovAtel and aviation use.
 
   // Roll/pitch/yaw in radians.
-  optional apollo.common.Point3D euler_angles = 5;
+  optional gnss_driver.pb.Point3D euler_angles = 5;
   // East/north/up in meters per second.
-  optional apollo.common.Point3D linear_velocity = 6;
+  optional gnss_driver.pb.Point3D linear_velocity = 6;
   // Around forward/left/up axes in radians per second.
-  optional apollo.common.Point3D angular_velocity = 7;
+  optional gnss_driver.pb.Point3D angular_velocity = 7;
   // Forward/left/up in meters per square second.
-  optional apollo.common.Point3D linear_acceleration = 8;
+  optional gnss_driver.pb.Point3D linear_acceleration = 8;
 
   // The size of a covariance matrix field may be
   //  3: then the elements are xx, yy, zz.

@@ -62,8 +62,8 @@ namespace gnss_driver {
                 "accept: */* \r\n\r\n"),
       timeout_s_(timeout_s) {
     ros::NodeHandle nh;
-    nh.param("gpgga_data_topic", _gpgga_data_topic,
-	     std::string("/apollo/sensor/gnss/gpgga"));
+    nh.param("gpgga_data_topic", gpgga_data_topic_,
+	     std::string("/gnss_driver/gpgga"));
     gpgga_data_sub_ = nh.subscribe(gpgga_data_topic_, 1000,
 				   &NtripStream::gpgga_data_callback, this);
   }
@@ -194,9 +194,9 @@ namespace gnss_driver {
 
   void NtripStream::gpgga_data_callback(const std_msgs::String::ConstPtr& msg) {
     size_t size_gga = 0;
-    apollo::drivers::gnss::gpgga::GPGGA gpgga;
+    gnss_driver::pb::GPGGA gpgga;
     gpgga.ParseFromString(msg->data);
-    std::string gga_request = _gga_data + gpgga.gpgga();
+    std::string gga_request = gga_data_ + gpgga.gpgga();
     size_gga = write(reinterpret_cast<const uint8_t*>(gga_request.data()),
 		     gga_request.size());
     if (size_gga != gga_request.size()) {

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <google/protobuf/message.h>
+
 #include "util/macros.h"
 
 namespace gnss_driver {
@@ -20,16 +22,14 @@ namespace gnss_driver {
 
 // TODO fix.
 // A general pointer to a protobuf message.
-// using MessagePtr = ::google::protobuf::Message *; 
+using MessagePtr = ::google::protobuf::Message *; 
 
 // A helper function that returns a pointer to a protobuf message of type T.
 // TODO fix
-/*
 template <class T>
 inline T *As(MessagePtr message_ptr) {
   return dynamic_cast<T *>(message_ptr);
 }
-*/
 
 // An abstract class of Parser.
 // One should use the create_xxx() functions to create a Parser object.
@@ -47,8 +47,8 @@ class Parser {
   // get_message()
   // returns NONE.
   void update(const uint8_t *data, size_t length) {
-    _data = data;
-    _data_end = data + length;
+    data_ = data;
+    data_end_ = data + length;
   }
 
   void update(const std::string &data) {
@@ -76,8 +76,8 @@ class Parser {
   Parser() {}
 
   // Point to the beginning and end of data. Do not take ownership.
-  const uint8_t *_data = nullptr;
-  const uint8_t *_data_end = nullptr;
+  const uint8_t *data_ = nullptr;
+  const uint8_t *data_end_ = nullptr;
 
  private:
   DISABLE_COPY_AND_ASSIGN(Parser);

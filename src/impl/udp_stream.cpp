@@ -119,7 +119,7 @@ void UdpStream::close() {
   if (_sockfd > 0) {
     ::close(_sockfd);
     _sockfd = -1;
-    _status = Stream::Status::DISCONNECTED;
+    status_ = Stream::Status::DISCONNECTED;
   }
 }
 
@@ -131,13 +131,13 @@ bool UdpStream::connect() {
     }
   }
 
-  if (_status == Stream::Status::CONNECTED) {
+  if (status_ == Stream::Status::CONNECTED) {
     return true;
   }
 
   // upper layer support ping method ??
   login();
-  _status = Stream::Status::CONNECTED;
+  status_ = Stream::Status::CONNECTED;
   return true;
 }
 
@@ -168,7 +168,7 @@ size_t UdpStream::read(uint8_t* buffer, size_t max_length) {
     } else {
       // error
       if (errno != EAGAIN) {
-        _status = Stream::Status::ERROR;
+        status_ = Stream::Status::ERROR;
         _errno = errno;
       }
     }
@@ -197,10 +197,10 @@ size_t UdpStream::write(const uint8_t* data, size_t length) {
       } else {
         // error
         if (errno == EPIPE || errno == ECONNRESET) {
-          _status = Stream::Status::DISCONNECTED;
+          status_ = Stream::Status::DISCONNECTED;
           _errno = errno;
         } else if (errno != EAGAIN) {
-          _status = Stream::Status::ERROR;
+          status_ = Stream::Status::ERROR;
           _errno = errno;
         }
         return total_nsent;

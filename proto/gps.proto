@@ -1,13 +1,13 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
 import "header.proto";
 import "pose.proto";
 
 message Gps {
-  optional gnss_driver.Header header = 1;
+  optional gnss_driver.pb.Header header = 1;
 
   // Localization message: from GPS or localization
-  optional gnss_driver.Pose localization = 2;
+  optional gnss_driver.pb.Pose localization = 2;
 }

@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
 message GPGGA {
   required string gpgga = 1;

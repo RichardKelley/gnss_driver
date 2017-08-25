@@ -1,11 +1,11 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
-import "modules/common/proto/header.proto";
+import "header.proto";
 
 message StreamStatus {
-  optional apollo.common.Header header = 1;
+  optional gnss_driver.pb.Header header = 1;
   enum Type {
     DISCONNECTED = 0;
     CONNECTED = 1;
@@ -17,7 +17,7 @@ message StreamStatus {
 }
 
 message InsStatus {
-  optional apollo.common.Header header = 1;
+  optional gnss_driver.pb.Header header = 1;
 
   enum Type {
     // Invalid solution due to insufficient observations, no initial GNSS, ...
@@ -34,7 +34,7 @@ message InsStatus {
 }
 
 message GnssStatus {
-  optional apollo.common.Header header = 1;
+  optional gnss_driver.pb.Header header = 1;
   optional bool solution_completed = 2 [default = false];
   optional uint32 solution_status = 3 [default = 0];
   optional uint32 position_type = 4 [default = 0];

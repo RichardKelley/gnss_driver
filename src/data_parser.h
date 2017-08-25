@@ -9,7 +9,6 @@
 
 #include "gnss/parser.h"
 
-// TODO figure out how to adapt config protos to our case.
 #include "proto/config.pb.h"
 
 // TODO replace these with messages
@@ -18,10 +17,13 @@
 #include "proto/ins.pb.h"
 #include "proto/gnss_status.pb.h"
 
-// TODO deal with
-// check_ins_status
-// check_gnss_status
-// member variables for gnss and ins statuses
+// ROS msgs
+#include "gnss_driver/Gnss.h"
+#include "gnss_driver/Imu.h"
+#include "gnss_driver/Ins.h"
+#include "gnss_driver/GnssStatus.h"
+#include "gnss_driver/InsStatus.h"
+#include "gnss_driver/StreamStatus.h"
 
 namespace gnss_driver {
 
@@ -40,8 +42,8 @@ namespace gnss_driver {
     void dispatch_message(Parser::MessageType type, MessagePtr message);
     void publish_odometry_pb_message(const MessagePtr message);
     void publish_corrimu_pb_message(const MessagePtr message);
-    void check_ins_status(::::gnss_driver::Ins *ins);
-    void check_gnss_status(::gnss_driver::Gnss *gnss);
+    void check_ins_status(::gnss_driver::pb::Ins *ins);
+    void check_gnss_status(::gnss_driver::pb::Gnss *gnss);
     
     bool inited_flag_ = false;
     std::unique_ptr<Parser> data_parser_;
@@ -53,8 +55,8 @@ namespace gnss_driver {
     const ros::Publisher gnss_status_publisher_;
     const ros::Publisher ins_status_publisher_;
     
-    boost::shared_ptr<gnss_driver::GnssStatus> gnss_status_;
-    boost::shared_ptr<gnss_driver::InsStatus> ins_status_;
+    boost::shared_ptr<gnss_driver::pb::GnssStatus> gnss_status_;
+    boost::shared_ptr<gnss_driver::pb::InsStatus> ins_status_;
     uint32_t ins_status_record_ = static_cast<uint32_t>(0);
     projPJ wgs84pj_source_;
     projPJ utm_target_;

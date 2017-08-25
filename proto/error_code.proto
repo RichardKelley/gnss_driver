@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package gnss_driver;
+package gnss_driver.pb;
 
 // Error codes enum for API's categorized by modules.
 enum ErrorCode {

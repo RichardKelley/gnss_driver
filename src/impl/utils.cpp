@@ -24,7 +24,7 @@ const char* triplet_base64(int triplet) {
 
 }  // namespace
 
-bool parse_config_text(const std::string& filename, config::Config* config) {
+bool parse_config_text(const std::string& filename, pb::Config* config) {
   int fd = open(filename.c_str(), O_RDONLY);
   if (-1 == fd) {
     return false;

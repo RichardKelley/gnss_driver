@@ -9,7 +9,7 @@ namespace gnss_driver {
 
 // TODO figure out how to handle config information.
   
-bool parse_config_text(const std::string &filename, config::Config *config);
+bool parse_config_text(const std::string &filename, pb::Config *config);
 
 std::string encode_base64(const std::string &in);
 

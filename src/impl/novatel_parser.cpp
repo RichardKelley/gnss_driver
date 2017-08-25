@@ -69,7 +69,7 @@ namespace gnss_driver {
     // A helper that fills an Point3D object (which uses the FLU frame) using RFU
     // measurements.
     inline void rfu_to_flu(double r, double f, double u,
-			   ::apollo::common::Point3D* flu) {
+			   gnss_driver::pb::Point3D* flu) {
       flu->set_x(f);
       flu->set_y(-r);
       flu->set_z(u);
@@ -115,9 +115,9 @@ namespace gnss_driver {
     novatel::SolutionType velocity_type_ = static_cast<novatel::SolutionType>(-1);
     novatel::InsStatus ins_status_ = static_cast<novatel::InsStatus>(-1);
     
-    ::apollo::drivers::gnss::Gnss gnss_;
-    ::apollo::drivers::gnss::Imu imu_;
-    ::apollo::drivers::gnss::Ins ins_;
+    gnss_driver::pb::Gnss gnss_;
+    gnss_driver::pb::Imu imu_;
+    gnss_driver::pb::Ins ins_;
   };
   
   Parser* Parser::create_novatel() { return new NovatelParser(); }
@@ -343,18 +343,18 @@ namespace gnss_driver {
       position_type_ = pos->position_type;
       ROS_INFO_STREAM("Position type: " << static_cast<int>(position_type_));
     }
-    gnss_.setsolution_status_(static_cast<uint32_t>(pos->solution_status));
+    gnss_.set_solution_status(static_cast<uint32_t>(pos->solution_status));
     if (pos->solution_status == novatel::SolutionStatus::SOL_COMPUTED) {
-      gnss_.setposition_type_(static_cast<uint32_t>(pos->position_type));
+      gnss_.set_position_type(static_cast<uint32_t>(pos->position_type));
       switch (pos->position_type) {
       case novatel::SolutionType::SINGLE:
       case novatel::SolutionType::INS_PSRSP:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::SINGLE);
+        gnss_.set_type(gnss_driver::pb::Gnss::SINGLE);
         break;
       case novatel::SolutionType::PSRDIFF:
       case novatel::SolutionType::WAAS:
       case novatel::SolutionType::INS_SBAS:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::PSRDIFF);
+        gnss_.set_type(gnss_driver::pb::Gnss::PSRDIFF);
         break;
       case novatel::SolutionType::FLOATCONV:
       case novatel::SolutionType::L1_FLOAT:
@@ -362,7 +362,7 @@ namespace gnss_driver {
       case novatel::SolutionType::NARROW_FLOAT:
       case novatel::SolutionType::RTK_DIRECT_INS:
       case novatel::SolutionType::INS_RTKFLOAT:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::RTK_FLOAT);
+        gnss_.set_type(gnss_driver::pb::Gnss::RTK_FLOAT);
         break;
       case novatel::SolutionType::WIDELANE:
       case novatel::SolutionType::NARROWLANE:
@@ -370,7 +370,7 @@ namespace gnss_driver {
       case novatel::SolutionType::WIDE_INT:
       case novatel::SolutionType::NARROW_INT:
       case novatel::SolutionType::INS_RTKFIXED:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::RTK_INTEGER);
+        gnss_.set_type(gnss_driver::pb::Gnss::RTK_INTEGER);
         break;
       case novatel::SolutionType::OMNISTAR:
       case novatel::SolutionType::INS_OMNISTAR:
@@ -382,17 +382,17 @@ namespace gnss_driver {
       case novatel::SolutionType::PPP:
       case novatel::SolutionType::INS_PPP_CONVERGING:
       case novatel::SolutionType::INS_PPP:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::PPP);
+        gnss_.set_type(gnss_driver::pb::Gnss::PPP);
         break;
       case novatel::SolutionType::PROPOGATED:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::PROPAGATED);
+        gnss_.set_type(gnss_driver::pb::Gnss::PROPAGATED);
         break;
       default:
-        gnss_.set_type(apollo::drivers::gnss::Gnss::INVALID);
+        gnss_.set_type(gnss_driver::pb::Gnss::INVALID);
       }
     } else {
-      gnss_.set_type(apollo::drivers::gnss::Gnss::INVALID);
-      gnss_.setposition_type_(0);
+      gnss_.set_type(gnss_driver::pb::Gnss::INVALID);
+      gnss_.set_position_type(0);
     }
     if (pos->datum_id != novatel::DatumId::WGS84) {
       ROS_ERROR_STREAM_THROTTLE(5, "Unexpected Datum Id: " << static_cast<int>(pos->datum_id));
@@ -449,7 +449,7 @@ namespace gnss_driver {
     return true;
   }
 
-  bool NovatelParser::handleins__cov(const novatel::InsCov* cov) {
+  bool NovatelParser::handle_ins_cov(const novatel::InsCov* cov) {
     for (int i = 0; i < 9; ++i) {
       ins_.set_position_covariance(i, cov->position_covariance[i]);
       ins_.set_euler_angles_covariance(INDEX[i], (DEG_TO_RAD * DEG_TO_RAD) *
@@ -459,10 +459,10 @@ namespace gnss_driver {
     return false;
   }
   
-  bool NovatelParser::handleins__pva(const novatel::InsPva* pva) {
-    if (ins__status != pva->status) {
-      ins__status = pva->status;
-      ROS_INFO_STREAM("INS status: " << static_cast<int>(ins__status));
+  bool NovatelParser::handle_ins_pva(const novatel::InsPva* pva) {
+    if (ins_status_ != pva->status) {
+      ins_status_ = pva->status;
+      ROS_INFO_STREAM("INS status: " << static_cast<int>(ins_status_));
     }
     ins_.mutable_position()->set_lon(pva->longitude);
     ins_.mutable_position()->set_lat(pva->latitude);
@@ -477,15 +477,15 @@ namespace gnss_driver {
     switch (pva->status) {
     case novatel::InsStatus::ALIGNMENT_COMPLETE:
     case novatel::InsStatus::SOLUTION_GOOD:
-      ins_.set_type(apollo::drivers::gnss::Ins::GOOD);
+      ins_.set_type(gnss_driver::pb::Ins::GOOD);
       break;
     case novatel::InsStatus::ALIGNING:
     case novatel::InsStatus::HIGH_VARIANCE:
     case novatel::InsStatus::SOLUTION_FREE:
-      ins_.set_type(apollo::drivers::gnss::Ins::CONVERGING);
+      ins_.set_type(gnss_driver::pb::Ins::CONVERGING);
       break;
     default:
-      ins_.set_type(apollo::drivers::gnss::Ins::INVALID);
+      ins_.set_type(gnss_driver::pb::Ins::INVALID);
     }
     
     double seconds = pva->gps_week * SECONDS_PER_WEEK + pva->gps_seconds;

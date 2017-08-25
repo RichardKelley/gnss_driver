@@ -1,199 +1,134 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gnss_driver)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+#add_compile_options(-std=c++11)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   nodelet
   roscpp
   std_msgs
+  message_generation
 )
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
+add_message_files(
+  FILES
+  Gnss.msg
+  Gps.msg
+  Point2D.msg
+  Pose.msg
+  GnssRange.msg
+  Imu.msg
+  Point3D.msg
+  Quaternion.msg
+  GnssStatus.msg
+  Ins.msg
+  PointENU.msg
+  RangeInfo.msg
+  GPGGA.msg
+  InsStatus.msg
+  PointLLH.msg
+  StreamStatus.msg
+)
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
-## To declare and build messages, services or actions from within this
-## package, follow these steps:
-## * Let MSG_DEP_SET be the set of packages whose message types you use in
-##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
-## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
-##     * add a run_depend tag for "message_runtime"
-## * In this file (CMakeLists.txt):
-##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
-##   * uncomment the add_*_files sections below as needed
-##     and list every .msg/.srv/.action file to be processed
-##   * uncomment the generate_messages entry below
-##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
-
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
-
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
-
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES gnss
-#  CATKIN_DEPENDS nodelet roscpp std_msgs
-#  DEPENDS system_lib
+  LIBRARIES ${catkin_LIBRARIES} roscpp
+  CATKIN_DEPENDS roscpp std_msgs message_runtime
+  DEPENDS protobuf
 )
 
-###########
-## Build ##
-###########
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "-g -pipe -W -Wall -Wno-sign-compare -Wno-unused-parameter -fPIC -O2 -Wno-parentheses -rdynamic -std=c++11")
+endif()
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+find_package(Proj)
+IF (DEFINED PROTOBUF_LIBRARIES)
+  MESSAGE(STATUS "proto: " ${PROTOBUF_LIBRARIES})
+ELSE()
+  set(PROTOBUF_LIBRARIES "protobuf")
+  MESSAGE(STATUS "proto: " ${PROTOBUF_LIBRARIES})
+ENDIF (defined PROTOBUF_LIBRARIES)
 
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/gnss.cpp
-# )
+include_directories(include)
+include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR})
+link_directories(lib)
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gnss_node.cpp)
+include_directories("${PROJECT_SOURCE_DIR}/proto")
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+SET(ERROR_CODE_SRCS "${PROJECT_SOURCE_DIR}/proto/error_code.pb.cc")
+SET(HEADER_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/header.pb.cc")
+SET(GEOMETRY_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/geometry.pb.cc")
+SET(LOCALIZATION_POSE_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/pose.pb.cc")
+SET(LOCALIZATION_GPS_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/gps.pb.cc")
+SET(LOCALIZATION_IMU_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/imu.pb.cc")
+SET(GNSS_STATUS_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/gnss_status.pb.cc")
+SET(CONFIG_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/config.pb.cc")
+SET(GPGGA_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/gpgga.pb.cc")
+SET(GNSS_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/gnss.pb.cc")
+SET(IMU_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/imu.pb.cc")
+SET(INS_PB_SRCS "${PROJECT_SOURCE_DIR}/proto/ins.pb.cc")
 
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_library(utils
+  src/impl/utils.cpp
+  ${CONFIG_PB_SRCS}
+  ${GPGGA_PB_SRCS}
+  ${GNSS_PB_SRCS}
+  ${IMU_PB_SRCS}
+  ${INS_PB_SRCS}
+  ${GNSS_STATUS_PB_SRCS}
+  ${LOCALIZATION_POSE_PB_SRCS}
+  ${LOCALIZATION_IMU_PB_SRCS}
+  ${LOCALIZATION_GPS_PB_SRCS}
+  ${HEADER_PB_SRCS}
+  ${ERROR_CODE_SRCS}
+  ${GEOMETRY_PB_SRCS})
+target_link_libraries(utils ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES})
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+add_library(stream_nodelet
+  src/stream_nodelet.cpp
+  src/raw_stream.cpp
+  src/impl/serial_stream.cpp
+  src/impl/tcp_stream.cpp
+  src/impl/udp_stream.cpp
+  src/impl/ntrip_stream.cpp)
+target_link_libraries(stream_nodelet utils ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES})
 
-#############
-## Install ##
-#############
+add_library(parser_nodelet
+  src/parser_nodelet.cpp
+  src/data_parser.cpp
+  src/impl/novatel_parser.cpp)
+add_dependencies(parser_nodelet novatel_msgs_generate_messages_cpp)
+target_link_libraries(parser_nodelet utils ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} proj)
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+add_executable(parser_cli
+  tests/parser_cli.cpp
+  src/impl/novatel_parser.cpp)
+target_link_libraries(parser_cli utils ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES})
 
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+add_executable(test_monitor
+  tests/test_monitor.cpp)
+target_link_libraries(test_monitor utils ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES})
 
-## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(
+  TARGETS stream_nodelet parser_nodelet utils test_monitor parser_cli
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_gnss.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+install(FILES nodelets.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+install(DIRECTORY conf/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/conf)

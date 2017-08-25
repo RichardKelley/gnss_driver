@@ -36,8 +36,8 @@ namespace gnss_driver {
     void stream_status_check();
     
     static constexpr size_t BUFFER_SIZE = 2048;
-    uint8_t _buffer[BUFFER_SIZE];
-    uint8_t _buffer_ntrip[BUFFER_SIZE];
+    uint8_t buffer_[BUFFER_SIZE];
+    uint8_t buffer_ntrip_[BUFFER_SIZE];
     
     std::shared_ptr<Stream> data_stream_;
     std::shared_ptr<Stream> command_stream_;
@@ -51,7 +51,7 @@ namespace gnss_driver {
     
     bool rtk_software_solution_ = false;
     bool is_healthy_ = true;
-    config::Config config_;
+    pb::Config config_;
     
     const std::string raw_data_topic_;
     const std::string rtcm_data_topic_;
@@ -59,7 +59,7 @@ namespace gnss_driver {
     const ros::Publisher rtcm_data_publisher_;
     const ros::Publisher stream_status_publisher_;
     
-    boost::shared_ptr<gnss_driver::StreamStatus> stream_status_;
+    boost::shared_ptr<gnss_driver::pb::StreamStatus> stream_status_;
     std::unique_ptr<std::thread> data_thread_ptr_;
     std::unique_ptr<std::thread> ntrip_thread_ptr_;
   };

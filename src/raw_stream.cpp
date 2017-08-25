@@ -7,23 +7,28 @@
 #include "gnss/stream.h"
 #include "gnss/utils.h"
 #include "proto/config.pb.h"
+#include "proto/gnss_status.pb.h"
 #include "raw_stream.h"
+
+// ROS msgs
+#include "gnss_driver/GnssStatus.h"
+#include "gnss_driver/StreamStatus.h"
 
 namespace {
   void switch_stream_status(const gnss_driver::Stream::Status &status,
-			    gnss_driver::StreamStatus_Type &report_status_type) {
+			    gnss_driver::pb::StreamStatus_Type &report_status_type) {
     switch (status) {
     case gnss_driver::Stream::Status::CONNECTED:
-      report_status_type = gnss_driver::StreamStatus::CONNECTED;
+      report_status_type = gnss_driver::pb::StreamStatus::CONNECTED;
       break;
 
     case gnss_driver::Stream::Status::DISCONNECTED:
-      report_status_type = gnss_driver::StreamStatus::DISCONNECTED;
+      report_status_type = gnss_driver::pb::StreamStatus::DISCONNECTED;
       break;
 
     case gnss_driver::Stream::Status::ERROR:
     default:
-      report_status_type = gnss_driver::StreamStatus::DISCONNECTED;
+      report_status_type = gnss_driver::pb::StreamStatus::DISCONNECTED;
       break;
     }
   }
@@ -31,9 +36,9 @@ namespace {
 
 namespace gnss_driver {
   
-  Stream *create_stream(const config::Stream &sd) {
+  Stream *create_stream(const gnss_driver::pb::Stream &sd) {
     switch (sd.type_case()) {
-    case config::Stream::kSerial:
+    case pb::Stream::kSerial:
       if (!sd.serial().has_device()) {
         ROS_ERROR("Serial def has no device field.");
         return nullptr;
@@ -46,7 +51,7 @@ namespace gnss_driver {
       return Stream::create_serial(sd.serial().device().c_str(),
                                    sd.serial().baud_rate());
       
-    case config::Stream::kTcp:
+    case pb::Stream::kTcp:
       if (!sd.tcp().has_address()) {
         ROS_ERROR("tcp def has no address field.");
         return nullptr;
@@ -57,7 +62,7 @@ namespace gnss_driver {
       }
       return Stream::create_tcp(sd.tcp().address().c_str(), sd.tcp().port());
       
-    case config::Stream::kUdp:
+    case pb::Stream::kUdp:
       if (!sd.udp().has_address()) {
         ROS_ERROR("tcp def has no address field.");
         return nullptr;
@@ -68,7 +73,7 @@ namespace gnss_driver {
       }
       return Stream::create_udp(sd.udp().address().c_str(), sd.udp().port());
       
-    case config::Stream::kNtrip:
+    case pb::Stream::kNtrip:
       if (!sd.ntrip().has_address()) {
         ROS_ERROR("ntrip def has no address field.");
         return nullptr;
@@ -106,7 +111,7 @@ namespace gnss_driver {
       rtcm_data_publisher_(nh.advertise<std_msgs::String>(rtcm_data_topic_, 256)),
       stream_status_publisher_(nh.advertise<gnss_driver::StreamStatus>(stream_status_topic, 256,
 								       true)) {
-    stream_status_.reset(new gnss_driver::StreamStatus());
+    stream_status_.reset(new gnss_driver::pb::StreamStatus());
   }
 
   RawStream::~RawStream() {
@@ -120,11 +125,12 @@ namespace gnss_driver {
       return false;
     }
     stream_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    stream_status_->set_ins_stream_type(gnss_driver::StreamStatus::DISCONNECTED);
-    stream_status_->set_rtk_stream_in_type(gnss_driver::StreamStatus::DISCONNECTED);
-    stream_status_->set_rtk_stream_out_type(gnss_driver::StreamStatus::DISCONNECTED);
-    stream_status_publisher_.publish(_stream_status);
-    if (!parse_config_text(cfg_file, &_config)) {
+    stream_status_->set_ins_stream_type(gnss_driver::pb::StreamStatus::DISCONNECTED);
+    stream_status_->set_rtk_stream_in_type(gnss_driver::pb::StreamStatus::DISCONNECTED);
+    stream_status_->set_rtk_stream_out_type(gnss_driver::pb::StreamStatus::DISCONNECTED);
+    // TODO
+    //stream_status_publisher_.publish(stream_status_);
+    if (!parse_config_text(cfg_file, &config_)) {
       ROS_INFO("Parse config context failed.");
       return false;
     }
@@ -205,7 +211,7 @@ namespace gnss_driver {
       
       if (config_.has_rtk_solution_type()) {
 	if (config_.rtk_solution_type() ==
-	    config::Config::RTK_SOFTWARE_SOLUTION) {
+	    gnss_driver::pb::Config::RTK_SOFTWARE_SOLUTION) {
 	  rtk_software_solution_ = true;
 	}
       }
@@ -244,7 +250,7 @@ namespace gnss_driver {
 	  return false;
 	}
 	data_stream_status_->status = Stream::Status::CONNECTED;
-	stream_status_->set_ins_stream_type(gnss_driver::StreamStatus::CONNECTED);
+	stream_status_->set_ins_stream_type(gnss_driver::pb::StreamStatus::CONNECTED);
       }
     }
     
@@ -264,11 +270,11 @@ namespace gnss_driver {
 	  ROS_ERROR("in rtk stream connect failed.");
 	} else {
 	  in_rtk_stream_status_->status = Stream::Status::CONNECTED;
-	  stream_status_->set_rtk_stream_in_type(gnss_driver::StreamStatus::CONNECTED);
+	  stream_status_->set_rtk_stream_in_type(gnss_driver::pb::StreamStatus::CONNECTED);
 	}
       }
     } else {
-      stream_status_->set_rtk_stream_in_type(gnss_driver::StreamStatus::CONNECTED);
+      stream_status_->set_rtk_stream_in_type(gnss_driver::pb::StreamStatus::CONNECTED);
     }
     
     if (out_rtk_stream_) {
@@ -277,11 +283,11 @@ namespace gnss_driver {
 	  ROS_ERROR("out rtk stream connect failed.");
 	} else {
 	  out_rtk_stream_status_->status = Stream::Status::CONNECTED;
-	  stream_status_->set_rtk_stream_out_type(gnss_driver::StreamStatus::CONNECTED);
+	  stream_status_->set_rtk_stream_out_type(gnss_driver::pb::StreamStatus::CONNECTED);
 	}
       }
     } else {
-      stream_status_->set_rtk_stream_out_type(gnss_driver::StreamStatus::CONNECTED);
+      stream_status_->set_rtk_stream_out_type(gnss_driver::pb::StreamStatus::CONNECTED);
     }
     return true;
   }
@@ -348,7 +354,7 @@ namespace gnss_driver {
 
   void RawStream::stream_status_check() {
     bool status_report = false;
-    gnss_driver::StreamStatus_Type report_stream_status;
+    gnss_driver::pb::StreamStatus_Type report_stream_status;
     
     if (data_stream_ &&
 	(data_stream_->get_status() != data_stream_status_->status)) {
@@ -376,14 +382,16 @@ namespace gnss_driver {
     
     if (status_report) {
       stream_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-      stream_status_publisher_.publish(stream_status_);
+      // TODO
+      //stream_status_publisher_.publish(stream_status_);
     }
   }
 
 
   void RawStream::data_spin() {
     stream_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    stream_status_publisher_.publish(stream_status_);
+    // TODO
+    //stream_status_publisher_.publish(stream_status_);
     while (ros::ok()) {
       size_t length = data_stream_->read(buffer_, BUFFER_SIZE);
       if (length > 0) {
