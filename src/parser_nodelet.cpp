@@ -10,8 +10,8 @@ namespace gnss_driver {
 
   class ParserNodelet : public nodelet::Nodelet {
   public:
-    ParserNodelet();
-    ~ParserNodelet();
+    ParserNodelet() {}
+    ~ParserNodelet() {}
 
   private:
     virtual void onInit();
