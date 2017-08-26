@@ -22,7 +22,6 @@
 #include "gnss_driver/Ins.h"
 #include "gnss_driver/Gps.h"
 
-// TODO - deal with this 
 #include "gps.pb.h"
 #include "imu.pb.h"
 
@@ -145,8 +144,7 @@ namespace gnss_driver {
   }
 
   void DataParser::check_ins_status(gnss_driver::pb::Ins *ins) {
-    // TODO
-    /*
+
     if (ins_status_record_ != static_cast<uint32_t>(ins->type())) {
       ins_status_record_ = static_cast<uint32_t>(ins->type());
       switch (ins->type()) {
@@ -164,14 +162,13 @@ namespace gnss_driver {
         break;
       }
       ins_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-      ins_status_publisher_.publish(ins_status_);
+      // TODO
+      //ins_status_publisher_.publish(ins_status_);
     }
-    */
+
   }
 
   void DataParser::check_gnss_status(gnss_driver::pb::Gnss *gnss) {
-    // TODO
-    /*
     gnss_status_->set_solution_status(
 				      static_cast<uint32_t>(gnss->solution_status()));
     gnss_status_->set_num_sats(static_cast<uint32_t>(gnss->num_sats()));
@@ -183,8 +180,9 @@ namespace gnss_driver {
       gnss_status_->set_solution_completed(false);
     }
     gnss_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    gnss_status_publisher_.publish(gnss_status_);
-    */
+    // TODO
+    //gnss_status_publisher_.publish(gnss_status_);
+
   }
 
   void DataParser::dispatch_message(Parser::MessageType type,
@@ -198,23 +196,20 @@ namespace gnss_driver {
       
     case Parser::MessageType::INS:
       check_ins_status(As<gnss_driver::pb::Ins>(message));
-      // TODO
-      //publish_corrimu_pb_message(message);
-      //publish_odometry_pb_message(message);
+      publish_corrimu_pb_message(message);
+      publish_odometry_pb_message(message);
       break;
       
     case Parser::MessageType::GPGGA:
-      // TODO
-      //publish_message_raw(gpgga_publisher_,
-      //                    As<gnss_driver::pb::GPGGA>(message));
+      publish_message_raw(gpgga_publisher_,
+                          As<gnss_driver::pb::GPGGA>(message));
     default:
       break;
     }
   }
 
   void DataParser::publish_odometry_pb_message(const MessagePtr message) {
-    // TODO
-    /*
+
     gnss_driver::pb::Ins *ins = As<gnss_driver::pb::Ins>(message);
     boost::shared_ptr<gnss_driver::pb::Gps> gps(new gnss_driver::pb::Gps());
     if (!gps) {
@@ -267,17 +262,37 @@ namespace gnss_driver {
     gps_msg->mutable_angular_velocity()->set_y(ins->angular_velocity().y());
     gps_msg->mutable_angular_velocity()->set_z(ins->angular_velocity().z());
     
-    ROS_DEBUG_STREAM(
-		     "local timeline odometry delay: "
+    /*
+    ROS_DEBUG_STREAM("local timeline odometry delay: "
 		     << (ros::Time::now().toSec() - ins->mutable_header()->timestamp_sec())
 		     << " s.");
-    nav_odometry_publisher_.publish(gps);
     */
+
+    gnss_driver::Gps ros_gps;
+    ros_gps.header.stamp = ros::Time::now();
+    ros_gps.localization.position.x = gps_msg->position().x();
+    ros_gps.localization.position.y = gps_msg->position().y();
+    ros_gps.localization.position.z = gps_msg->position().z();
+
+    ros_gps.localization.orientation.qx = gps_msg->orientation().qx();
+    ros_gps.localization.orientation.qy = gps_msg->orientation().qy();
+    ros_gps.localization.orientation.qz = gps_msg->orientation().qz();
+    ros_gps.localization.orientation.qw = gps_msg->orientation().qw();
+
+    ros_gps.localization.linear_velocity.x = gps_msg->linear_velocity().x();
+    ros_gps.localization.linear_velocity.y = gps_msg->linear_velocity().y();
+    ros_gps.localization.linear_velocity.z = gps_msg->linear_velocity().z();
+
+    ros_gps.localization.angular_velocity.x = gps_msg->angular_velocity().x();
+    ros_gps.localization.angular_velocity.y = gps_msg->angular_velocity().y();
+    ros_gps.localization.angular_velocity.z = gps_msg->angular_velocity().z();
+
+    // TODO
+    nav_odometry_publisher_.publish(ros_gps);
+
   }
   
   void DataParser::publish_corrimu_pb_message(const MessagePtr message) {
-    // TODO
-    /*
     gnss_driver::pb::Ins *ins = As<gnss_driver::pb::Ins>(message);
     boost::shared_ptr<gnss_driver::pb::Imu> imu(new gnss_driver::pb::Imu());
     if (!imu) {
@@ -289,20 +304,22 @@ namespace gnss_driver {
     double pub_sec = ros::Time::now().toSec();
     ROS_DEBUG_STREAM("gps timeline imu delay: " << pub_sec - unix_sec << " s.");
     
-    auto *imu_msg = imu->mutable_imu();
-    imu_msg->mutable_linear_acceleration()->set_x(-ins->linear_acceleration().y());
-    imu_msg->mutable_linear_acceleration()->set_y(ins->linear_acceleration().x());
-    imu_msg->mutable_linear_acceleration()->set_z(ins->linear_acceleration().z());
+    //auto *imu_msg = imu->mutable_imu();
+    //imu_msg->mutable_linear_acceleration()->set_x(-ins->linear_acceleration().y());
+    //imu_msg->mutable_linear_acceleration()->set_y(ins->linear_acceleration().x());
+    //imu_msg->mutable_linear_acceleration()->set_z(ins->linear_acceleration().z());
     
-    imu_msg->mutable_angular_velocity()->set_x(-ins->angular_velocity().y());
-    imu_msg->mutable_angular_velocity()->set_y(ins->angular_velocity().x());
-    imu_msg->mutable_angular_velocity()->set_z(ins->angular_velocity().z());
+    //imu_msg->mutable_angular_velocity()->set_x(-ins->angular_velocity().y());
+    //imu_msg->mutable_angular_velocity()->set_y(ins->angular_velocity().x());
+    //imu_msg->mutable_angular_velocity()->set_z(ins->angular_velocity().z());
 
     ROS_DEBUG_STREAM("local timeline imu delay: "
 		     << (ros::Time::now().toSec() - ins->mutable_header()->timestamp_sec())
 		     << " s.");
-    imu_publisher_.publish(imu);
-    */
+
+    // TODO publish
+    //imu_publisher_.publish(imu);
+
   }
   
 
