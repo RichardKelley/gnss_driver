@@ -11,7 +11,6 @@
 
 #include "proto/config.pb.h"
 
-// TODO replace these with messages
 #include "proto/gnss.pb.h"
 #include "proto/imu.pb.h"
 #include "proto/ins.pb.h"

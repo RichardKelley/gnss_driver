@@ -22,6 +22,9 @@
 #include "gnss_driver/Ins.h"
 #include "gnss_driver/Gps.h"
 
+#include "gnss_driver/InsStatus.h"
+#include "gnss_driver/GnssStatus.h"
+
 #include "gps.pb.h"
 #include "imu.pb.h"
 
@@ -107,9 +110,22 @@ namespace gnss_driver {
     }
     ins_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
     gnss_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    // TODO
-    //ins_status_publisher_.publish(ins_status_);
-    //gnss_status_publisher_.publish(gnss_status_);
+
+    gnss_driver::InsStatus ros_ins_status;
+    gnss_driver::GnssStatus ros_gnss_status;
+
+    ros_ins_status.header.stamp = ros::Time::now();
+    ros_gnss_status.header.stamp = ros::Time::now();
+
+    ros_ins_status.type = ins_status_->type();
+
+    ros_gnss_status.solution_completed = gnss_status_->solution_completed();
+    ros_gnss_status.solution_status = gnss_status_->solution_status();
+    ros_gnss_status.position_type = gnss_status_->position_type();
+    ros_gnss_status.num_sats = gnss_status_->num_sats();
+    
+    ins_status_publisher_.publish(ros_ins_status);
+    gnss_status_publisher_.publish(ros_gnss_status);
     if (!parse_config_text(cfg_file, &config)) {
       ROS_FATAL_STREAM("Failed to load config file: " << cfg_file);
       return false;
@@ -162,8 +178,11 @@ namespace gnss_driver {
         break;
       }
       ins_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-      // TODO
-      //ins_status_publisher_.publish(ins_status_);
+
+      gnss_driver::InsStatus ros_ins_status;
+      ros_ins_status.header.stamp = ros::Time::now();
+      ros_ins_status.type = ins_status_->type();
+      ins_status_publisher_.publish(ros_ins_status);
     }
 
   }
@@ -180,8 +199,15 @@ namespace gnss_driver {
       gnss_status_->set_solution_completed(false);
     }
     gnss_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    // TODO
-    //gnss_status_publisher_.publish(gnss_status_);
+
+    gnss_driver::GnssStatus ros_gnss_status;
+    ros_gnss_status.header.stamp = ros::Time::now();
+    ros_gnss_status.solution_completed = gnss_status_->solution_completed();
+    ros_gnss_status.solution_status = gnss_status_->solution_status();
+    ros_gnss_status.position_type = gnss_status_->position_type();
+    ros_gnss_status.num_sats = gnss_status_->num_sats();
+    
+    gnss_status_publisher_.publish(ros_gnss_status);
 
   }
 
@@ -287,7 +313,6 @@ namespace gnss_driver {
     ros_gps.localization.angular_velocity.y = gps_msg->angular_velocity().y();
     ros_gps.localization.angular_velocity.z = gps_msg->angular_velocity().z();
 
-    // TODO
     nav_odometry_publisher_.publish(ros_gps);
 
   }
@@ -303,6 +328,17 @@ namespace gnss_driver {
     imu->mutable_header()->set_timestamp_sec(unix_sec);
     double pub_sec = ros::Time::now().toSec();
     ROS_DEBUG_STREAM("gps timeline imu delay: " << pub_sec - unix_sec << " s.");
+
+    gnss_driver::Imu ros_imu_msg;
+
+    ros_imu_msg.header.stamp = ros::Time::now();
+    ros_imu_msg.imu.linear_acceleration.x = -ins->linear_acceleration().y();
+    ros_imu_msg.imu.linear_acceleration.y = ins->linear_acceleration().x();
+    ros_imu_msg.imu.linear_acceleration.z = ins->linear_acceleration().z();
+
+    ros_imu_msg.imu.angular_velocity.x = -ins->angular_velocity().y();
+    ros_imu_msg.imu.angular_velocity.y = ins->angular_velocity().x();
+    ros_imu_msg.imu.angular_velocity.z = ins->angular_velocity().z();
     
     //auto *imu_msg = imu->mutable_imu();
     //imu_msg->mutable_linear_acceleration()->set_x(-ins->linear_acceleration().y());
@@ -317,8 +353,7 @@ namespace gnss_driver {
 		     << (ros::Time::now().toSec() - ins->mutable_header()->timestamp_sec())
 		     << " s.");
 
-    // TODO publish
-    //imu_publisher_.publish(imu);
+    imu_publisher_.publish(ros_imu_msg);
 
   }
   

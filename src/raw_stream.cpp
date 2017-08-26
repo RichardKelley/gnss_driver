@@ -128,8 +128,15 @@ namespace gnss_driver {
     stream_status_->set_ins_stream_type(gnss_driver::pb::StreamStatus::DISCONNECTED);
     stream_status_->set_rtk_stream_in_type(gnss_driver::pb::StreamStatus::DISCONNECTED);
     stream_status_->set_rtk_stream_out_type(gnss_driver::pb::StreamStatus::DISCONNECTED);
-    // TODO
-    //stream_status_publisher_.publish(stream_status_);
+
+    gnss_driver::StreamStatus ros_stream_status;
+    ros_stream_status.header.stamp = ros::Time::now();
+    ros_stream_status.ins_stream_type = gnss_driver::StreamStatus::DISCONNECTED;
+    ros_stream_status.rtk_stream_in_type = gnss_driver::StreamStatus::DISCONNECTED;
+    ros_stream_status.rtk_stream_out_type = gnss_driver::StreamStatus::DISCONNECTED;
+    
+    stream_status_publisher_.publish(ros_stream_status);
+
     if (!parse_config_text(cfg_file, &config_)) {
       ROS_INFO("Parse config context failed.");
       return false;
@@ -382,16 +389,29 @@ namespace gnss_driver {
     
     if (status_report) {
       stream_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-      // TODO
-      //stream_status_publisher_.publish(stream_status_);
+
+      gnss_driver::StreamStatus ros_stream_status;
+      ros_stream_status.header.stamp = ros::Time::now();
+
+      ros_stream_status.ins_stream_type = stream_status_->ins_stream_type();
+      ros_stream_status.rtk_stream_in_type = stream_status_->rtk_stream_in_type();
+      ros_stream_status.rtk_stream_out_type = stream_status_->rtk_stream_out_type();      
+      stream_status_publisher_.publish(ros_stream_status);
     }
   }
 
 
   void RawStream::data_spin() {
     stream_status_->mutable_header()->set_timestamp_sec(ros::Time::now().toSec());
-    // TODO
-    //stream_status_publisher_.publish(stream_status_);
+
+    gnss_driver::StreamStatus ros_stream_status;
+    ros_stream_status.header.stamp = ros::Time::now();
+    
+    ros_stream_status.ins_stream_type = stream_status_->ins_stream_type();
+    ros_stream_status.rtk_stream_in_type = stream_status_->rtk_stream_in_type();
+    ros_stream_status.rtk_stream_out_type = stream_status_->rtk_stream_out_type();      
+    stream_status_publisher_.publish(ros_stream_status);
+    
     while (ros::ok()) {
       size_t length = data_stream_->read(buffer_, BUFFER_SIZE);
       if (length > 0) {
