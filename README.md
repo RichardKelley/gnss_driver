@@ -34,8 +34,8 @@ This GNSS driver has two nodelets: a data stream nodelet and a parser nodelet. T
 
 ## Configuration
 We use protocol buffers to store the driver configuration. The configuration file is stored in path `share/gnss_driver/conf/` which is quoted by gnss_driver.launch. File gnss_driver.launch is stored in path `share/gnss_driver/launch/`.
-When using the gnss_driver, the follwing soudl be attended:
-- To use the location with UTM projection, check the zone id configuration in gnss_driver.launch
-- Check the the lever arm distance
-- Confirm the imu install method, as this affects the vehicle's frame and orientation compute
+When using the gnss_driver, the following should be checked before deployment:
+- To use the location with UTM projection, check the zone id configuration in gnss_driver.launch.
+- Check the the lever arm distance.
+- Confirm the imu install method, as this affects the vehicle's frame and orientation compute.
 
