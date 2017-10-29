@@ -46,6 +46,8 @@
 #include "gnss_driver/InsStatus.h"
 #include "gnss_driver/GnssStatus.h"
 
+#include <sensor_msgs/Imu.h>
+
 #include "gps.pb.h"
 #include "imu.pb.h"
 
@@ -102,11 +104,16 @@ namespace gnss_driver {
       gnss_status_publisher_(nh.advertise<gnss_driver::GnssStatus>(
 								       gnss_status_topic, 64, true)),
       ins_status_publisher_(nh.advertise<gnss_driver::InsStatus>(ins_status_topic,
-								     64, true)) {
+								 64, true)),
+      ros_imu_publisher_(nh.advertise<sensor_msgs::Imu>("/gnss_driver/imu/data", 64) {
+
     std::string utm_target_param;
     nh.param("proj4_text", utm_target_param, UTM_TARGET);
     ROS_INFO_STREAM("proj4_text : " << utm_target_param);
     
+    // create the Imu timer.
+    ros_imu_timer_ = nh.createTimer(ros::Duration(0.01), &DataParser::publish_ros_imu, this);
+
     wgs84pj_source_ = pj_init_plus(WGS84_TEXT.c_str());
     utm_target_ = pj_init_plus(utm_target_param.c_str());
     gnss_status_.reset(new gnss_driver::pb::GnssStatus());
@@ -121,6 +128,10 @@ namespace gnss_driver {
     if (ins_status_) {
       ins_status_->set_type(gnss_driver::pb::InsStatus::INVALID);
     }
+  }
+
+  void publish_ros_imu(const ros::TimerEvent& e) {
+    ros_imu_publisher_.publish(ros_imu_);
   }
 
   bool DataParser::init(const std::string &cfg_file) {
@@ -336,6 +347,12 @@ namespace gnss_driver {
 
     nav_odometry_publisher_.publish(ros_gps);
 
+    // update sensor_msgs/Imu
+    ros_imu_.orientation.x = ros_gps.localization.orientation.qx;
+    ros_imu_.orientation.y = ros_gps.localization.orientation.qy;
+    ros_imu_.orientation.z = ros_gps.localization.orientation.qz;
+    ros_imu_.orientation.w = ros_gps.localization.orientation.qw;
+    
   }
   
   void DataParser::publish_corrimu_pb_message(const MessagePtr message) {
@@ -376,6 +393,15 @@ namespace gnss_driver {
 
     imu_publisher_.publish(ros_imu_msg);
 
+    // update sensor_msgs/Imu
+    ros_imu_.angular_velocity.x = ros_imu_msg.imu.angular_velocity.x;
+    ros_imu_.angular_velocity.y = ros_imu_msg.imu.angular_velocity.y;
+    ros_imu_.angular_velocity.z = ros_imu_msg.imu.angular_velocity.z;
+
+    ros_imu_.linear_acceleration.x = ros_imu_msg.imu.linear_acceleration.x;
+    ros_imu_.linear_acceleration.y = ros_imu_msg.imu.linear_acceleration.y;
+    ros_imu_.linear_acceleration.z = ros_imu_msg.imu.linear_acceleration.z;
+    
   }
   
 

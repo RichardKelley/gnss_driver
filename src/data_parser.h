@@ -45,6 +45,8 @@
 #include "gnss_driver/InsStatus.h"
 #include "gnss_driver/StreamStatus.h"
 
+#include <sensor_msgs/Imu.h>
+
 namespace gnss_driver {
 
   class DataParser {
@@ -68,12 +70,19 @@ namespace gnss_driver {
     bool inited_flag_ = false;
     std::unique_ptr<Parser> data_parser_;
     
+    sensor_msgs::Imu ros_imu_;
+
     const ros::Subscriber raw_data_sub_;
     const ros::Publisher gpgga_publisher_;
     const ros::Publisher imu_publisher_;
     const ros::Publisher nav_odometry_publisher_;
     const ros::Publisher gnss_status_publisher_;
     const ros::Publisher ins_status_publisher_;
+    const ros::Publisher ros_imu_publisher_;
+
+    // Publishes IMU data using a sensor_msgs/Imu.
+    const ros::Timer ros_imu_timer_;
+    void publish_ros_imu(const ros::TimerEvent& e);
     
     boost::shared_ptr<gnss_driver::pb::GnssStatus> gnss_status_;
     boost::shared_ptr<gnss_driver::pb::InsStatus> ins_status_;
