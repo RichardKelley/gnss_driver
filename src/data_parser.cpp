@@ -105,14 +105,15 @@ namespace gnss_driver {
 								       gnss_status_topic, 64, true)),
       ins_status_publisher_(nh.advertise<gnss_driver::InsStatus>(ins_status_topic,
 								 64, true)),
-      ros_imu_publisher_(nh.advertise<sensor_msgs::Imu>("/gnss_driver/imu/data", 64) {
+      ros_imu_publisher_(nh.advertise<sensor_msgs::Imu>("/gnss_driver/imu/data", 64)),
+      ros_imu_timer_(nh.createTimer(ros::Duration(0.01), &DataParser::publish_ros_imu, this)) {
 
     std::string utm_target_param;
     nh.param("proj4_text", utm_target_param, UTM_TARGET);
     ROS_INFO_STREAM("proj4_text : " << utm_target_param);
     
     // create the Imu timer.
-    ros_imu_timer_ = nh.createTimer(ros::Duration(0.01), &DataParser::publish_ros_imu, this);
+    //ros_imu_timer_ = nh.createTimer(ros::Duration(0.01), &DataParser::publish_ros_imu, this);
 
     wgs84pj_source_ = pj_init_plus(WGS84_TEXT.c_str());
     utm_target_ = pj_init_plus(utm_target_param.c_str());
@@ -130,7 +131,7 @@ namespace gnss_driver {
     }
   }
 
-  void publish_ros_imu(const ros::TimerEvent& e) {
+  void DataParser::publish_ros_imu(const ros::TimerEvent& e) {
     ros_imu_publisher_.publish(ros_imu_);
   }
 
