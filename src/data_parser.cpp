@@ -334,6 +334,22 @@ namespace gnss_driver {
     ros_gps.localization.angular_velocity.y = gps_msg->angular_velocity().y();
     ros_gps.localization.angular_velocity.z = gps_msg->angular_velocity().z();
 
+    // compute the heading
+    double yaw = std::atan2(2.0 * (ros_gps.localization.orientation.qw * ros_gps.localization.orientation.qz -
+				   ros_gps.localization.orientation.qx * ros_gps.localization.orientation.qy),
+			    2.0 * (ros_gps.localization.orientation.qw * ros_gps.localization.orientation.qw +
+				   ros_gps.localization.orientation.qy * ros_gps.localization.orientation.qy) - 1.0);
+
+    yaw += M_PI/2.0;
+    
+    // normalize yaw to [-pi, pi)
+    double new_angle = std::fmod(yaw + M_PI, 2.0 * M_PI);
+    if (new_angle < 0.0) {
+      ros_gps.localization.heading = (new_angle + 2.0 * M_PI) - M_PI;
+    } else {
+      ros_gps.localization.heading = new_angle - M_PI;
+    }    
+
     nav_odometry_publisher_.publish(ros_gps);
 
   }
